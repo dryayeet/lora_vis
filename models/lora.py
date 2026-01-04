@@ -22,10 +22,11 @@ class LoRALayer(nn.Module):
         self.alpha = alpha
         
         # LoRA matrices
-        # A: (in_features, rank) - projects down to low-rank space
-        # B: (rank, out_features) - projects back up to original space
-        self.lora_A = nn.Parameter(torch.zeros(in_features, rank))
-        self.lora_B = nn.Parameter(torch.zeros(rank, out_features))
+        # A: (rank, in_features) - projects down to low-rank space
+        # B: (out_features, rank) - projects back up to original space
+        # This matches the standard LoRA implementation
+        self.lora_A = nn.Parameter(torch.zeros(rank, in_features))
+        self.lora_B = nn.Parameter(torch.zeros(out_features, rank))
         
         # Scaling factor
         self.scaling = alpha / rank
@@ -40,13 +41,18 @@ class LoRALayer(nn.Module):
         Compute the LoRA adaptation
         
         Args:
-            x: Input tensor
+            x: Input tensor of shape (batch, in_features)
         
         Returns:
-            LoRA output: (B @ A) @ x, scaled by alpha/rank
+            LoRA output: (x @ A.T @ B.T).T scaled by alpha/rank
         """
-        # x @ A @ B^T, but we compute it as (x @ A) @ B^T for efficiency
-        result = x @ self.lora_A  # (batch, rank)
+        # x: (batch, in_features)
+        # A: (rank, in_features)
+        # B: (out_features, rank)
+        # We want: x @ A.T @ B.T = x @ (B @ A)
+        # x @ A.T gives (batch, rank)
+        # (batch, rank) @ B.T gives (batch, out_features)
+        result = x @ self.lora_A.T  # (batch, rank)
         result = result @ self.lora_B.T  # (batch, out_features)
         result = result * self.scaling
         return result
@@ -58,7 +64,7 @@ class LoRALayer(nn.Module):
         Returns:
             Delta weight matrix of shape (out_features, in_features)
         """
-        return (self.lora_B.T @ self.lora_A.T) * self.scaling
+        return (self.lora_B @ self.lora_A) * self.scaling
 
 
 class LinearWithLoRA(nn.Module):
