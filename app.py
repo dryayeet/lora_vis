@@ -131,7 +131,8 @@ with tab3:
         st.markdown("---")
         st.markdown("### Memory Efficiency")
         if st.session_state.lora_enabled:
-            base_params = sum(p.numel() for p in st.session_state.model.parameters() if 'lora' not in p.name if hasattr(p, 'name') else True)
+            # Count only non-LoRA parameters
+            base_params = sum(p.numel() for name, p in st.session_state.model.named_parameters() if 'lora' not in name)
             lora_params = get_lora_parameters(st.session_state.model)
             total_params = sum(p.numel() for p in st.session_state.model.parameters())
             
