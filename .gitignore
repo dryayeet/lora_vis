@@ -1,0 +1,148 @@
+# .gitignore - Place this in your project root
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Streamlit
+.streamlit/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data
+data/
+*.csv
+*.pkl
+
+# Logs
+*.log
+
+# Assets (generated)
+assets/temp/
+
+# ===============================================
+# GIT SETUP GUIDE
+# ===============================================
+
+To make this a proper Git-maintainable project:
+
+1. INITIALIZE GIT REPOSITORY
+   --------------------------------
+   cd lora_visualizer
+   git init
+
+2. CREATE .gitignore
+   --------------------------------
+   # Copy the content above into a file named .gitignore
+   # Place it in the root directory (lora_visualizer/)
+
+3. STAGE ALL FILES
+   --------------------------------
+   git add .
+
+4. FIRST COMMIT
+   --------------------------------
+   git commit -m "Initial commit: LoRA visualizer with all features"
+
+5. CREATE GITHUB REPOSITORY (OPTIONAL)
+   --------------------------------
+   # Go to github.com and create a new repository
+   # Then connect your local repo:
+   
+   git remote add origin https://github.com/YOUR_USERNAME/lora-visualizer.git
+   git branch -M main
+   git push -u origin main
+
+6. RECOMMENDED BRANCH STRUCTURE
+   --------------------------------
+   main          # Stable release branch
+   develop       # Development branch
+   feature/*     # Feature branches
+
+   # Create develop branch:
+   git checkout -b develop
+
+7. TYPICAL WORKFLOW
+   --------------------------------
+   # Create feature branch
+   git checkout -b feature/new-visualization
+   
+   # Make changes and commit
+   git add .
+   git commit -m "Add new visualization feature"
+   
+   # Merge back to develop
+   git checkout develop
+   git merge feature/new-visualization
+   
+   # Delete feature branch
+   git branch -d feature/new-visualization
+
+8. USEFUL GIT COMMANDS
+   --------------------------------
+   git status                    # Check status
+   git log --oneline            # View commit history
+   git diff                     # See changes
+   git checkout -- <file>       # Discard changes
+   git reset --hard HEAD        # Reset to last commit
+   git tag v1.0.0              # Create version tag
+   git push --tags             # Push tags to remote
+
+9. COMMIT MESSAGE CONVENTIONS
+   --------------------------------
+   feat: Add new feature
+   fix: Bug fix
+   docs: Documentation changes
+   style: Code formatting
+   refactor: Code refactoring
+   test: Add tests
+   chore: Maintenance tasks
+
+   Example:
+   git commit -m "feat: Add QLoRA visualization support"
+   git commit -m "fix: Correct gradient flow animation"
+   git commit -m "docs: Update README with installation steps"
+
+10. RELEASE PROCESS
+    --------------------------------
+    # Tag releases with semantic versioning
+    git tag -a v1.0.0 -m "Release version 1.0.0"
+    git push origin v1.0.0
+    
+    # Create release notes
+    # - List new features
+    # - List bug fixes
+    # - List breaking changes
