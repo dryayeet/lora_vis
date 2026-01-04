@@ -1,5 +1,6 @@
 # .gitignore - Place this in your project root
 # Python
+.viz
 __pycache__/
 *.py[cod]
 *$py.class
