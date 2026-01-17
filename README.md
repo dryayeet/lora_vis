@@ -1,8 +1,8 @@
-# 🧠 LoRA Fine-Tuning Simulator & Neural Memory Graph Visualizer
+# LoRA Fine-Tuning Simulator & Neural Memory Graph Visualizer
 
 An interactive visualization tool that explains how LoRA (Low-Rank Adaptation) fine-tuning works internally. Built with PyTorch, NetworkX, PyVis, and Streamlit.
 
-## ✨ Features
+## Features
 
 1. **Model Overview** - Visualize base neural network architecture
 2. **LoRA Injection** - See how LoRA matrices A and B are added to the model
@@ -11,7 +11,7 @@ An interactive visualization tool that explains how LoRA (Low-Rank Adaptation) f
 5. **Backward Pass Animation** - See gradient flow and understand which parameters get updated
 6. **Knowledge Change Simulator** - Fine-tune on custom data and see how predictions change
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -20,17 +20,14 @@ An interactive visualization tool that explains how LoRA (Low-Rank Adaptation) f
 
 ### Installation
 
-1. **Clone or download this project**
+1. Clone or download this project
 
 ```bash
-# If you have git
 git clone <your-repo-url>
 cd lora_visualizer
-
-# Or simply extract the ZIP file and navigate to the folder
 ```
 
-2. **Install dependencies**
+2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -44,7 +41,7 @@ streamlit run src/app.py
 
 The application will open in your default web browser at `http://localhost:8501`
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 lora_visualizer/
@@ -69,14 +66,14 @@ lora_visualizer/
 └── README.md                      # This file
 ```
 
-## 🎮 How to Use
+## Usage
 
-### 1. Enable LoRA
+### Enable LoRA
 
 - Use the sidebar checkbox to enable/disable LoRA
 - Adjust the LoRA rank slider (1-8) to see how it affects the model
 
-### 2. Explore Tabs
+### Explore Tabs
 
 #### Tab 1: Model Overview
 - View the base model architecture
@@ -85,9 +82,9 @@ lora_visualizer/
 
 #### Tab 2: LoRA Injection
 - See how LoRA matrices A and B are attached
-- Blue nodes = trainable LoRA parameters
-- Gray nodes = frozen original weights
-- Gold nodes = effective combined weights
+- Blue nodes represent trainable LoRA parameters
+- Gray nodes represent frozen original weights
+- Gold nodes represent effective combined weights
 
 #### Tab 3: Memory Dashboard
 - Compare parameter counts across methods
@@ -102,7 +99,7 @@ lora_visualizer/
 #### Tab 5: Backward Pass
 - Click "Run Backward Pass" button
 - Watch gradients flow backward
-- Green nodes = receiving gradients
+- Green nodes indicate nodes receiving gradients
 - See how gradients skip frozen weights in LoRA mode
 
 #### Tab 6: Knowledge Change
@@ -113,15 +110,15 @@ lora_visualizer/
 - See how model outputs change
 - Visualize updated LoRA matrices
 
-## 🔬 Understanding LoRA
+## Understanding LoRA
 
 ### What is LoRA?
 
 LoRA (Low-Rank Adaptation) is a parameter-efficient fine-tuning technique that:
 
-1. **Freezes** the original model weights (W)
-2. **Adds** trainable low-rank matrices A and B
-3. **Computes** the effective weight as: W_effective = W + ΔW where ΔW = B @ A
+1. Freezes the original model weights (W)
+2. Adds trainable low-rank matrices A and B
+3. Computes the effective weight as: W_effective = W + ΔW where ΔW = B @ A
 
 ### Why LoRA?
 
@@ -137,7 +134,7 @@ LoRA (Low-Rank Adaptation) is a parameter-efficient fine-tuning technique that:
 - **B Matrix**: Up-projection from r dimensions back to d dimensions
 - **ΔW = B @ A**: The low-rank update to original weights
 
-## 🛠️ Technical Details
+## Technical Details
 
 ### Model Architecture
 
@@ -146,10 +143,7 @@ The default toy model is a simple 2-layer MLP:
 - Hidden: 16 dimensions
 - Output: 4 dimensions
 
-This small size allows for:
-- Fast CPU-only computation
-- Clear visualization
-- Easy understanding
+This small size allows for fast CPU-only computation, clear visualization, and easy understanding.
 
 ### LoRA Implementation
 
@@ -164,10 +158,7 @@ class LoRALayer:
         return x @ self.A @ self.B.T  # Low-rank path
 ```
 
-The full implementation includes:
-- Proper initialization (A random, B zeros)
-- Scaling factor (alpha / rank)
-- Integration with frozen base weights
+The full implementation includes proper initialization (A random, B zeros), scaling factor (alpha / rank), and integration with frozen base weights.
 
 ### Memory Calculations
 
@@ -178,17 +169,17 @@ Memory (MB) = (num_parameters × 4 bytes) / (1024²)
 
 Where 4 bytes = float32 precision
 
-## 🎨 Visualization Features
+## Visualization Features
 
 ### Color Coding
 
-- 🟢 **Green**: Input/Active nodes
-- 🔵 **Blue**: Trainable LoRA parameters
-- ⚪ **Gray**: Frozen base weights
-- 🟡 **Gold**: Effective combined weights
-- 🟠 **Orange**: Activation functions
-- 🔴 **Red**: Output
-- 🟩 **Lime**: Nodes receiving gradients
+- **Green**: Input/Active nodes
+- **Blue**: Trainable LoRA parameters
+- **Gray**: Frozen base weights
+- **Gold**: Effective combined weights
+- **Orange**: Activation functions
+- **Red**: Output
+- **Lime**: Nodes receiving gradients
 
 ### Graph Layout
 
@@ -197,30 +188,30 @@ Where 4 bytes = float32 precision
 - Hover over nodes for details
 - Click and drag to rearrange
 
-## 📊 Example Use Cases
+## Example Use Cases
 
-### 1. Learning LoRA Basics
+### Learning LoRA Basics
 - Start with LoRA disabled
 - Enable LoRA and see the graph change
 - Adjust rank to understand the trade-off
 
-### 2. Understanding Gradient Flow
+### Understanding Gradient Flow
 - Run backward pass with LoRA disabled
 - Enable LoRA and run again
 - Compare which weights receive gradients
 
-### 3. Fine-tuning Experiments
+### Fine-tuning Experiments
 - Enter custom training data
 - Try different ranks (1, 2, 4, 8)
 - Observe how outputs change
 - View updated LoRA matrices
 
-### 4. Memory Analysis
+### Memory Analysis
 - Compare parameter counts
 - Understand memory savings
 - See the impact of rank on efficiency
 
-## ⚙️ Configuration
+## Configuration
 
 ### Adjustable Parameters
 
@@ -245,27 +236,22 @@ model = ToyMLP(
 )
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-**Issue**: Application won't start
+**Application won't start**
 ```bash
-# Solution: Ensure all dependencies are installed
 pip install -r requirements.txt --upgrade
 ```
 
-**Issue**: Graphs not displaying
-```bash
-# Solution: Try a different browser (Chrome recommended)
-# or clear browser cache
-```
+**Graphs not displaying**
+- Try a different browser (Chrome recommended)
+- Clear browser cache
 
-**Issue**: Slow performance
-```bash
-# Solution: The model is designed for CPU
-# Reduce animation steps or model size if needed
-```
+**Slow performance**
+- The model is designed for CPU
+- Reduce animation steps or model size if needed
 
 ### System Requirements
 
@@ -274,12 +260,12 @@ pip install -r requirements.txt --upgrade
 - **Browser**: Chrome, Firefox, or Edge (latest versions)
 - **Python**: 3.8 or higher
 
-## 📚 Learning Resources
+## Learning Resources
 
 ### Recommended Reading
 
-1. **LoRA Paper**: "LoRA: Low-Rank Adaptation of Large Language Models" (Hu et al., 2021)
-2. **QLoRA Paper**: "QLoRA: Efficient Finetuning of Quantized LLMs" (Dettmers et al., 2023)
+1. "LoRA: Low-Rank Adaptation of Large Language Models" (Hu et al., 2021)
+2. "QLoRA: Efficient Finetuning of Quantized LLMs" (Dettmers et al., 2023)
 
 ### Understanding the Code
 
@@ -287,45 +273,43 @@ pip install -r requirements.txt --upgrade
 - `models/lora.py`: Read this to see how LoRA is implemented
 - `visualizers/graph_builder.py`: Learn how graphs are constructed
 
-## 🤝 Contributing
+## Contributing
 
 To extend this project:
 
-1. **Add new model architectures**: Edit `models/toy_model.py`
-2. **Improve visualizations**: Modify files in `visualizers/`
-3. **Add new features**: Extend `src/app.py` with new tabs
-4. **Optimize performance**: Enhance animation rendering
+1. Add new model architectures: Edit `models/toy_model.py`
+2. Improve visualizations: Modify files in `visualizers/`
+3. Add new features: Extend `src/app.py` with new tabs
+4. Optimize performance: Enhance animation rendering
 
-## 📝 License
+## License
 
 This project is for educational purposes. Feel free to use and modify for learning.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with PyTorch for neural network operations
 - Streamlit for the interactive UI
 - NetworkX and PyVis for graph visualization
 - Matplotlib for plotting
 
-## 📧 Support
+## Support
 
 If you encounter issues:
+
 1. Check this README
 2. Verify all dependencies are installed
 3. Try restarting the application
 4. Check Python version (3.8+)
 
-## 🎓 Educational Goals
+## Educational Goals
 
 This tool aims to help you:
-- ✅ Understand LoRA architecture visually
-- ✅ See gradient flow in real-time
-- ✅ Compare memory efficiency
-- ✅ Experiment with fine-tuning
-- ✅ Build intuition about parameter-efficient training
 
----
-
-**Happy Learning! 🚀**
+- Understand LoRA architecture visually
+- See gradient flow in real-time
+- Compare memory efficiency
+- Experiment with fine-tuning
+- Build intuition about parameter-efficient training
 
 For more information about LoRA and parameter-efficient fine-tuning, explore the papers and resources mentioned above.
