@@ -8,12 +8,12 @@
 # Linux/Mac
 chmod +x setup.sh && ./setup.sh
 source venv/bin/activate
-streamlit run app.py
+streamlit run src/app.py
 
 # Windows
 setup.bat
 venv\Scripts\activate
-streamlit run app.py
+streamlit run src/app.py
 ```
 
 ---
@@ -48,22 +48,22 @@ pip install -r requirements.txt
 
 ### Standard Launch
 ```bash
-streamlit run app.py
+streamlit run src/app.py
 ```
 
 ### Custom Port
 ```bash
-streamlit run app.py --server.port 8502
+streamlit run src/app.py --server.port 8502
 ```
 
 ### Network Access
 ```bash
-streamlit run app.py --server.address 0.0.0.0
+streamlit run src/app.py --server.address 0.0.0.0
 ```
 
 ### Debug Mode
 ```bash
-streamlit run app.py --logger.level debug
+streamlit run src/app.py --logger.level debug
 ```
 
 ---
@@ -145,7 +145,8 @@ streamlit cache clear
 
 ```
 lora_visualizer/
-├── app.py                     # Main app
+├── src/
+│   └── app.py                 # Main app
 ├── requirements.txt           # Dependencies
 ├── README.md                  # Documentation
 ├── models/
@@ -181,7 +182,7 @@ model = ToyMLP(
 ```
 
 ### Change LoRA Rank Range
-Edit `app.py` sidebar:
+Edit `src/app.py` sidebar:
 ```python
 lora_rank = st.slider(
     "LoRA Rank", 
@@ -229,7 +230,7 @@ max_frames = 10  # Reduce from default
 
 ### Cache Data
 ```python
-# In app.py, add caching
+# In src/app.py, add caching
 @st.cache_data
 def load_data():
     return data
@@ -280,7 +281,7 @@ pip install -r requirements.txt
 
 ### "Port in use"
 ```bash
-streamlit run app.py --server.port 8502
+streamlit run src/app.py --server.port 8502
 ```
 
 ### "Permission denied"
@@ -349,11 +350,11 @@ secondaryBackgroundColor = "#F0F2F6"  # Light gray
 
 ### Change Port
 ```bash
-streamlit run app.py --server.port 8080
+streamlit run src/app.py --server.port 8080
 ```
 
 ### Add Title
-In `app.py`:
+In `src/app.py`:
 ```python
 st.set_page_config(
     page_title="My LoRA Visualizer",

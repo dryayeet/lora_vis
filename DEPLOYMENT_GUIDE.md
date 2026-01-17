@@ -25,7 +25,7 @@ chmod +x setup.sh
 source venv/bin/activate
 
 # 4. Run application
-streamlit run app.py
+streamlit run src/app.py
 ```
 
 ### For Windows:
@@ -38,7 +38,7 @@ setup.bat
 venv\Scripts\activate
 
 # 4. Run application
-streamlit run app.py
+streamlit run src/app.py
 ```
 
 ---
@@ -140,7 +140,8 @@ You should see all packages marked as "OK".
 ```
 lora_visualizer/
 │
-├── app.py                          # Main application entry point
+├── src/
+│   └── app.py                      # Main application entry point
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # Project documentation
 ├── DEPLOYMENT_GUIDE.md            # This file
@@ -180,7 +181,7 @@ lora_visualizer/
 ### Step-by-Step File Organization
 
 1. **Root Directory Files** (`lora_visualizer/`)
-   - Place: `app.py`, `requirements.txt`, `README.md`, `.gitignore`
+   - Place: `src/app.py`, `requirements.txt`, `README.md`, `.gitignore`
    - Place: `setup.sh`, `setup.bat`, `test_installation.py`
 
 2. **Models Directory** (`lora_visualizer/models/`)
@@ -211,7 +212,7 @@ dir /S  # Windows alternative
 ```
 
 Ensure you have at least:
-- ✅ 1 main file (app.py)
+- ✅ 1 main file (src/app.py)
 - ✅ 2 model files
 - ✅ 4 visualizer files
 - ✅ 2 utility files
@@ -234,7 +235,7 @@ source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 
 # 3. Launch Streamlit
-streamlit run app.py
+streamlit run src/app.py
 ```
 
 ### Expected Output
@@ -371,8 +372,8 @@ streamlit: command not found
 pip install streamlit
 
 # Or use full path
-./venv/bin/streamlit run app.py  # Linux/Mac
-venv\Scripts\streamlit run app.py  # Windows
+./venv/bin/streamlit run src/app.py  # Linux/Mac
+venv\Scripts\streamlit run src/app.py  # Windows
 ```
 
 #### Issue 3: Port Already in Use
@@ -385,7 +386,7 @@ OSError: [Errno 48] Address already in use
 **Solution:**
 ```bash
 # Use different port
-streamlit run app.py --server.port 8502
+streamlit run src/app.py --server.port 8502
 
 # Or kill existing process
 # Linux/Mac:
@@ -466,7 +467,7 @@ If you encounter other issues:
 
 3. **Test Your Changes:**
    ```bash
-   streamlit run app.py
+   streamlit run src/app.py
    ```
 
 4. **Commit Changes:**
@@ -506,7 +507,7 @@ Before committing:
 
 1. **Run the app:**
    ```bash
-   streamlit run app.py
+   streamlit run src/app.py
    ```
 
 2. **Test all features:**
@@ -525,7 +526,7 @@ When ready to release:
 
 1. **Update version:**
    ```python
-   # In app.py, update version number
+   # In src/app.py, update version number
    VERSION = "1.0.0"
    ```
 
@@ -558,7 +559,7 @@ When ready to release:
    - Click "New app"
    - Select your repository
    - Select branch: `main`
-   - Main file: `app.py`
+   - Main file: `src/app.py`
    - Click "Deploy"
 
 5. **Access:**
@@ -577,7 +578,7 @@ heroku login
 heroku create lora-visualizer
 
 # Create Procfile
-echo "web: streamlit run app.py --server.port=\$PORT" > Procfile
+echo "web: streamlit run src/app.py --server.port=\$PORT" > Procfile
 
 # Deploy
 git push heroku main
@@ -598,7 +599,7 @@ COPY . .
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "app.py", "--server.port=8501"]
+CMD ["streamlit", "run", "src/app.py", "--server.port=8501"]
 ```
 
 Build and run:

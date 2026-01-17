@@ -39,7 +39,7 @@ pip install -r requirements.txt
 ### Running the Application
 
 ```bash
-streamlit run app.py
+streamlit run src/app.py
 ```
 
 The application will open in your default web browser at `http://localhost:8501`
@@ -48,21 +48,23 @@ The application will open in your default web browser at `http://localhost:8501`
 
 ```
 lora_visualizer/
-├── app.py                          # Main Streamlit application
-├── models/
-│   ├── __init__.py
-│   ├── toy_model.py               # Base neural network (MLP)
-│   └── lora.py                    # LoRA implementation
-├── visualizers/
-│   ├── __init__.py
-│   ├── graph_builder.py           # Graph visualization
-│   ├── memory_tracker.py          # Memory usage analysis
-│   ├── forward_animator.py        # Forward pass animation
-│   └── backward_animator.py       # Backward pass animation
-├── utils/
-│   ├── __init__.py
-│   ├── dataset.py                 # Toy dataset utilities
-│   └── math_utils.py              # Mathematical helper functions
+├── src/
+│   ├── app.py                     # Main Streamlit application
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── toy_model.py          # Base neural network (MLP)
+│   │   └── lora.py                # LoRA implementation
+│   ├── visualizers/
+│   │   ├── __init__.py
+│   │   ├── graph_builder.py       # Graph visualization
+│   │   ├── memory_tracker.py      # Memory usage analysis
+│   │   ├── forward_animator.py    # Forward pass animation
+│   │   └── backward_animator.py   # Backward pass animation
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── dataset.py             # Toy dataset utilities
+│   │   └── math_utils.py          # Mathematical helper functions
+│   └── assets/                    # Assets directory
 ├── requirements.txt               # Python dependencies
 └── README.md                      # This file
 ```
@@ -291,7 +293,7 @@ To extend this project:
 
 1. **Add new model architectures**: Edit `models/toy_model.py`
 2. **Improve visualizations**: Modify files in `visualizers/`
-3. **Add new features**: Extend `app.py` with new tabs
+3. **Add new features**: Extend `src/app.py` with new tabs
 4. **Optimize performance**: Enhance animation rendering
 
 ## 📝 License

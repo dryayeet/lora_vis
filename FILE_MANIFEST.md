@@ -7,11 +7,11 @@ This document lists all files you need to create for the LoRA Visualizer project
 
 ## 📄 Files to Create (Total: 22 files)
 
-### Root Directory (`lora_visualizer/`)
+### Source Directory (`lora_visualizer/src/`)
 
 | # | File Name | Purpose | Lines | Status |
 |---|-----------|---------|-------|--------|
-| 1 | `app.py` | Main Streamlit application | ~350 | ✅ Created |
+| 1 | `src/app.py` | Main Streamlit application | ~350 | ✅ Created |
 | 2 | `requirements.txt` | Python dependencies | ~6 | ✅ Created |
 | 3 | `README.md` | Project documentation | ~500 | ✅ Created |
 | 4 | `DEPLOYMENT_GUIDE.md` | Deployment instructions | ~600 | ✅ Created |
@@ -22,7 +22,7 @@ This document lists all files you need to create for the LoRA Visualizer project
 | 9 | `setup.bat` | Windows setup script | ~150 | ✅ Created |
 | 10 | `test_installation.py` | Installation test | ~50 | ✅ Created |
 
-### Models Directory (`lora_visualizer/models/`)
+### Models Directory (`lora_visualizer/src/models/`)
 
 | # | File Name | Purpose | Lines | Status |
 |---|-----------|---------|-------|--------|
@@ -30,7 +30,7 @@ This document lists all files you need to create for the LoRA Visualizer project
 | 12 | `toy_model.py` | Neural network models | ~150 | ✅ Created |
 | 13 | `lora.py` | LoRA implementation | ~300 | ✅ Created |
 
-### Visualizers Directory (`lora_visualizer/visualizers/`)
+### Visualizers Directory (`lora_visualizer/src/visualizers/`)
 
 | # | File Name | Purpose | Lines | Status |
 |---|-----------|---------|-------|--------|
@@ -40,7 +40,7 @@ This document lists all files you need to create for the LoRA Visualizer project
 | 17 | `forward_animator.py` | Forward pass animation | ~250 | ✅ Created |
 | 18 | `backward_animator.py` | Backward pass animation | ~300 | ✅ Created |
 
-### Utils Directory (`lora_visualizer/utils/`)
+### Utils Directory (`lora_visualizer/src/utils/`)
 
 | # | File Name | Purpose | Lines | Status |
 |---|-----------|---------|-------|--------|
@@ -72,7 +72,8 @@ This document lists all files you need to create for the LoRA Visualizer project
 ```
 lora_visualizer/
 │
-├── 📄 app.py                          (Main application)
+├── 📁 src/
+│   └── 📄 app.py                      (Main application - now in src/)
 ├── 📄 requirements.txt                (Dependencies)
 ├── 📄 README.md                       (Main documentation)
 ├── 📄 DEPLOYMENT_GUIDE.md            (Setup instructions)
@@ -119,7 +120,7 @@ lora_visualizer/
 - [x] Create `test_installation.py`
 
 ### Phase 2: Core Application
-- [x] Create `app.py`
+- [x] Create `src/app.py`
 - [x] Create `models/__init__.py`
 - [x] Create `models/toy_model.py`
 - [x] Create `models/lora.py`
@@ -151,9 +152,9 @@ lora_visualizer/
 
 ### Core Dependencies
 ```
-app.py
-├── models/toy_model.py
-├── models/lora.py
+src/app.py
+├── src/models/toy_model.py
+├── src/models/lora.py
 ├── visualizers/graph_builder.py
 ├── visualizers/memory_tracker.py
 ├── visualizers/forward_animator.py
@@ -182,7 +183,7 @@ memory_tracker.py
 
 ### Core Files
 
-#### `app.py`
+#### `src/app.py`
 - **Purpose**: Main Streamlit application
 - **Key Features**: 6 tabs, sidebar controls, session state
 - **Dependencies**: All visualizers, models, utils
@@ -345,12 +346,12 @@ memory_tracker.py
 
 | Feature | Primary File | Support Files |
 |---------|-------------|---------------|
-| Model Overview | `app.py` | `graph_builder.py`, `toy_model.py` |
-| LoRA Injection | `app.py` | `lora.py`, `graph_builder.py` |
-| Memory Dashboard | `app.py` | `memory_tracker.py`, `lora.py` |
-| Forward Pass | `app.py` | `forward_animator.py` |
-| Backward Pass | `app.py` | `backward_animator.py` |
-| Knowledge Change | `app.py` | `dataset.py`, `lora.py` |
+| Model Overview | `src/app.py` | `graph_builder.py`, `toy_model.py` |
+| LoRA Injection | `src/app.py` | `lora.py`, `graph_builder.py` |
+| Memory Dashboard | `src/app.py` | `memory_tracker.py`, `lora.py` |
+| Forward Pass | `src/app.py` | `forward_animator.py` |
+| Backward Pass | `src/app.py` | `backward_animator.py` |
+| Knowledge Change | `src/app.py` | `dataset.py`, `lora.py` |
 
 ---
 
@@ -370,7 +371,7 @@ memory_tracker.py
 
 | File | Complexity | Lines | Dependencies |
 |------|-----------|-------|--------------|
-| `app.py` | High | 350 | Many |
+| `src/app.py` | High | 350 | Many |
 | `lora.py` | High | 300 | PyTorch |
 | `graph_builder.py` | Medium | 300 | PyVis, NetworkX |
 | `forward_animator.py` | Medium | 250 | PyVis |

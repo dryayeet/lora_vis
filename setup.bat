@@ -169,7 +169,7 @@ echo print("-" * 50^)
 echo.
 echo if all_success:
 echo     print("\n√ All packages imported successfully!"^)
-echo     print("\nRun: streamlit run app.py"^)
+echo     print("\nRun: streamlit run src/app.py"^)
 echo else:
 echo     print("\n× Some packages failed to import"^)
 echo.
@@ -192,7 +192,7 @@ if %errorlevel% equ 0 (
     echo Next steps:
     echo   1. Place all Python files in their directories
     echo   2. Activate virtual environment: venv\Scripts\activate
-    echo   3. Run application: streamlit run app.py
+    echo   3. Run application: streamlit run src/app.py
     echo   4. Initialize Git: git init
     echo.
 ) else (
