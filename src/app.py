@@ -2,6 +2,14 @@ import streamlit as st
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
+from pathlib import Path
+
+# Add src directory to path for imports
+src_path = Path(__file__).parent
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
 from models.toy_model import ToyMLP
 from models.lora import inject_lora, get_lora_parameters
 from visualizers.graph_builder import build_model_graph, build_lora_graph
