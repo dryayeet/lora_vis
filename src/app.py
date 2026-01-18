@@ -55,11 +55,10 @@ with st.sidebar:
             st.session_state.trained = False
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Model Overview", 
     "LoRA Injection", 
-    "Forward Pass",
-    "Backward Pass",
+    "Forward & Backward Pass",
     "Knowledge Change",
     "Memory Dashboard"
 ])
@@ -119,75 +118,121 @@ with tab2:
         st.warning("Enable LoRA in the sidebar to see LoRA injection")
 
 with tab3:
-    st.header("Forward Pass Simulation")
+    st.header("Forward & Backward Pass Simulation")
+    
+    # Initialize session state for frames
+    if 'forward_frames' not in st.session_state:
+        st.session_state.forward_frames = []
+    if 'backward_frames' not in st.session_state:
+        st.session_state.backward_frames = []
+    if 'pass_type' not in st.session_state:
+        st.session_state.pass_type = 'forward'  # 'forward' or 'backward'
     
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        if st.button("Run Forward Pass", key="forward"):
-            animator = ForwardAnimator(st.session_state.model, st.session_state.lora_enabled)
+        # Single button to run both passes
+        if st.button("Run Forward & Backward Pass", key="run_passes"):
+            # Reset gradients
+            for param in st.session_state.model.parameters():
+                if param.grad is not None:
+                    param.grad.zero_()
             
             # Create sample input
             x = torch.randn(1, 8)
             
             with st.spinner("Running forward pass..."):
-                frames = animator.animate(x)
+                forward_animator = ForwardAnimator(st.session_state.model, st.session_state.lora_enabled)
+                st.session_state.forward_frames = forward_animator.animate(x)
+            
+            with st.spinner("Running backward pass..."):
+                # Run forward to get output
+                output = st.session_state.model(x)
+                loss = output.sum()
                 
-                # Display frames
-                frame_placeholder = st.empty()
-                for i, frame_html in enumerate(frames):
-                    frame_placeholder.markdown(f"**Step {i+1}/{len(frames)}**")
-                    st.components.v1.html(frame_html, height=500, scrolling=True)
-                    
-                st.success("Forward pass complete!")
+                backward_animator = BackwardAnimator(st.session_state.model, st.session_state.lora_enabled)
+                st.session_state.backward_frames = backward_animator.animate(loss)
+            
+            st.session_state.pass_type = 'forward'  # Start with forward
+            st.success("Both passes complete! Use the slider below to navigate.")
+        
+        # Select which pass to view
+        pass_selection = st.radio(
+            "View Pass:",
+            ["Forward Pass", "Backward Pass"],
+            index=0 if st.session_state.pass_type == 'forward' else 1,
+            horizontal=True,
+            key="pass_selection"
+        )
+        
+        # Determine which frames to show
+        if pass_selection == "Forward Pass":
+            frames = st.session_state.forward_frames
+            pass_type = 'forward'
+            pass_label = "Forward"
+        else:
+            frames = st.session_state.backward_frames
+            pass_type = 'backward'
+            pass_label = "Backward"
+        
+        # Display frames with slider if available
+        if frames:
+            st.session_state.pass_type = pass_type
+            
+            # Slider to navigate frames (slider manages its own state)
+            slider_key = f"frame_slider_{pass_type}"
+            
+            # Get initial value from session state if exists, otherwise 0
+            initial_value = st.session_state.get(slider_key, 0)
+            # Ensure initial value is within bounds
+            if initial_value >= len(frames):
+                initial_value = 0
+            
+            # Slider to navigate frames
+            frame_idx = st.slider(
+                f"{pass_label} Pass Step",
+                min_value=0,
+                max_value=len(frames) - 1 if len(frames) > 0 else 0,
+                value=initial_value,
+                key=slider_key,
+                help="Use the slider to navigate through the animation steps"
+            )
+            
+            # Display current frame
+            if frame_idx < len(frames) and len(frames) > 0:
+                st.markdown(f"**{pass_label} Pass - Step {frame_idx + 1}/{len(frames)}**")
+                st.components.v1.html(frames[frame_idx], height=500, scrolling=True)
+        else:
+            st.info("Click 'Run Forward & Backward Pass' to generate the animation.")
     
     with col2:
+        st.markdown("### Information")
+        
+        # Input info
         st.markdown("### Input")
         x_input = torch.randn(1, 8)
         st.code(f"Shape: {list(x_input.shape)}\n{x_input.numpy()}")
         
+        # Forward pass info
         if st.session_state.lora_enabled:
-            st.markdown("### LoRA Flow")
+            st.markdown("### Forward Pass Flow")
             st.markdown("""
             1. Input → Linear Layer
             2. W (frozen) + B @ A (trainable)
             3. Activation → Next Layer
             """)
         else:
-            st.markdown("### Standard Flow")
+            st.markdown("### Forward Pass Flow")
             st.markdown("""
             1. Input → Linear Layer (W)
             2. Activation Function
             3. Output → Next Layer
             """)
-
-with tab4:
-    st.header("Gradient Flow Simulation")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        if st.button("Run Backward Pass", key="backward"):
-            animator = BackwardAnimator(st.session_state.model, st.session_state.lora_enabled)
-            
-            # Create sample input and run forward
-            x = torch.randn(1, 8)
-            output = st.session_state.model(x)
-            loss = output.sum()
-            
-            with st.spinner("Running backward pass..."):
-                frames = animator.animate(loss)
-                
-                # Display frames
-                frame_placeholder = st.empty()
-                for i, frame_html in enumerate(frames):
-                    frame_placeholder.markdown(f"**Step {i+1}/{len(frames)}**")
-                    st.components.v1.html(frame_html, height=500, scrolling=True)
-                    
-                st.success("Backward pass complete!")
-    
-    with col2:
-        st.markdown("### Gradient Info")
+        
+        st.markdown("---")
+        
+        # Backward pass info
+        st.markdown("### Backward Pass Info")
         
         if st.session_state.lora_enabled:
             st.markdown("### Gradients Flow To:")
@@ -203,7 +248,7 @@ with tab4:
             st.markdown("- All weight matrices")
             st.markdown("- All bias terms")
 
-with tab5:
+with tab4:
     st.header("Knowledge Change Simulator")
     
     # Task selection
@@ -429,7 +474,7 @@ with tab5:
             **Regression**: Generic task for learning continuous outputs from inputs
             """)
 
-with tab6:
+with tab5:
     st.header("Memory Comparison Dashboard")
     
     fig, stats = compare_memory(st.session_state.model, st.session_state.lora_enabled, st.session_state.lora_rank)
