@@ -55,13 +55,12 @@ with st.sidebar:
             st.session_state.trained = False
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Model Overview", 
     "LoRA Injection", 
-    "Memory Dashboard",
-    "Forward Pass",
-    "Backward Pass",
-    "Knowledge Change"
+    "Forward & Backward Pass",
+    "Knowledge Change",
+    "Memory Dashboard"
 ])
 
 with tab1:
@@ -119,106 +118,121 @@ with tab2:
         st.warning("Enable LoRA in the sidebar to see LoRA injection")
 
 with tab3:
-    st.header("Memory Comparison Dashboard")
+    st.header("Forward & Backward Pass Simulation")
     
-    fig, stats = compare_memory(st.session_state.model, st.session_state.lora_enabled, st.session_state.lora_rank)
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.pyplot(fig)
-    
-    with col2:
-        st.markdown("### Statistics")
-        for key, value in stats.items():
-            if isinstance(value, dict):
-                st.markdown(f"**{key}**")
-                for k, v in value.items():
-                    st.metric(k, v)
-            else:
-                st.metric(key, value)
-        
-        st.markdown("---")
-        st.markdown("### Memory Efficiency")
-        if st.session_state.lora_enabled:
-            # Count only non-LoRA parameters
-            base_params = sum(p.numel() for name, p in st.session_state.model.named_parameters() if 'lora' not in name)
-            lora_params = get_lora_parameters(st.session_state.model)
-            total_params = sum(p.numel() for p in st.session_state.model.parameters())
-            
-            efficiency = (1 - lora_params / total_params) * 100
-            st.metric("Parameter Reduction", f"{efficiency:.1f}%")
-
-with tab4:
-    st.header("Forward Pass Simulation")
+    # Initialize session state for frames
+    if 'forward_frames' not in st.session_state:
+        st.session_state.forward_frames = []
+    if 'backward_frames' not in st.session_state:
+        st.session_state.backward_frames = []
+    if 'pass_type' not in st.session_state:
+        st.session_state.pass_type = 'forward'  # 'forward' or 'backward'
     
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        if st.button("Run Forward Pass", key="forward"):
-            animator = ForwardAnimator(st.session_state.model, st.session_state.lora_enabled)
+        # Single button to run both passes
+        if st.button("Run Forward & Backward Pass", key="run_passes"):
+            # Reset gradients
+            for param in st.session_state.model.parameters():
+                if param.grad is not None:
+                    param.grad.zero_()
             
             # Create sample input
             x = torch.randn(1, 8)
             
             with st.spinner("Running forward pass..."):
-                frames = animator.animate(x)
+                forward_animator = ForwardAnimator(st.session_state.model, st.session_state.lora_enabled)
+                st.session_state.forward_frames = forward_animator.animate(x)
+            
+            with st.spinner("Running backward pass..."):
+                # Run forward to get output
+                output = st.session_state.model(x)
+                loss = output.sum()
                 
-                # Display frames
-                frame_placeholder = st.empty()
-                for i, frame_html in enumerate(frames):
-                    frame_placeholder.markdown(f"**Step {i+1}/{len(frames)}**")
-                    st.components.v1.html(frame_html, height=500, scrolling=True)
-                    
-                st.success("Forward pass complete!")
+                backward_animator = BackwardAnimator(st.session_state.model, st.session_state.lora_enabled)
+                st.session_state.backward_frames = backward_animator.animate(loss)
+            
+            st.session_state.pass_type = 'forward'  # Start with forward
+            st.success("Both passes complete! Use the slider below to navigate.")
+        
+        # Select which pass to view
+        pass_selection = st.radio(
+            "View Pass:",
+            ["Forward Pass", "Backward Pass"],
+            index=0 if st.session_state.pass_type == 'forward' else 1,
+            horizontal=True,
+            key="pass_selection"
+        )
+        
+        # Determine which frames to show
+        if pass_selection == "Forward Pass":
+            frames = st.session_state.forward_frames
+            pass_type = 'forward'
+            pass_label = "Forward"
+        else:
+            frames = st.session_state.backward_frames
+            pass_type = 'backward'
+            pass_label = "Backward"
+        
+        # Display frames with slider if available
+        if frames:
+            st.session_state.pass_type = pass_type
+            
+            # Slider to navigate frames (slider manages its own state)
+            slider_key = f"frame_slider_{pass_type}"
+            
+            # Get initial value from session state if exists, otherwise 0
+            initial_value = st.session_state.get(slider_key, 0)
+            # Ensure initial value is within bounds
+            if initial_value >= len(frames):
+                initial_value = 0
+            
+            # Slider to navigate frames
+            frame_idx = st.slider(
+                f"{pass_label} Pass Step",
+                min_value=0,
+                max_value=len(frames) - 1 if len(frames) > 0 else 0,
+                value=initial_value,
+                key=slider_key,
+                help="Use the slider to navigate through the animation steps"
+            )
+            
+            # Display current frame
+            if frame_idx < len(frames) and len(frames) > 0:
+                st.markdown(f"**{pass_label} Pass - Step {frame_idx + 1}/{len(frames)}**")
+                st.components.v1.html(frames[frame_idx], height=500, scrolling=True)
+        else:
+            st.info("Click 'Run Forward & Backward Pass' to generate the animation.")
     
     with col2:
+        st.markdown("### Information")
+        
+        # Input info
         st.markdown("### Input")
         x_input = torch.randn(1, 8)
         st.code(f"Shape: {list(x_input.shape)}\n{x_input.numpy()}")
         
+        # Forward pass info
         if st.session_state.lora_enabled:
-            st.markdown("### LoRA Flow")
+            st.markdown("### Forward Pass Flow")
             st.markdown("""
             1. Input → Linear Layer
             2. W (frozen) + B @ A (trainable)
             3. Activation → Next Layer
             """)
         else:
-            st.markdown("### Standard Flow")
+            st.markdown("### Forward Pass Flow")
             st.markdown("""
             1. Input → Linear Layer (W)
             2. Activation Function
             3. Output → Next Layer
             """)
-
-with tab5:
-    st.header("Gradient Flow Simulation")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        if st.button("Run Backward Pass", key="backward"):
-            animator = BackwardAnimator(st.session_state.model, st.session_state.lora_enabled)
-            
-            # Create sample input and run forward
-            x = torch.randn(1, 8)
-            output = st.session_state.model(x)
-            loss = output.sum()
-            
-            with st.spinner("Running backward pass..."):
-                frames = animator.animate(loss)
-                
-                # Display frames
-                frame_placeholder = st.empty()
-                for i, frame_html in enumerate(frames):
-                    frame_placeholder.markdown(f"**Step {i+1}/{len(frames)}**")
-                    st.components.v1.html(frame_html, height=500, scrolling=True)
-                    
-                st.success("Backward pass complete!")
-    
-    with col2:
-        st.markdown("### Gradient Info")
+        
+        st.markdown("---")
+        
+        # Backward pass info
+        st.markdown("### Backward Pass Info")
         
         if st.session_state.lora_enabled:
             st.markdown("### Gradients Flow To:")
@@ -234,7 +248,7 @@ with tab5:
             st.markdown("- All weight matrices")
             st.markdown("- All bias terms")
 
-with tab6:
+with tab4:
     st.header("Knowledge Change Simulator")
     
     # Task selection
@@ -337,7 +351,7 @@ with tab6:
                     st.session_state.output_after = output_after
                     st.session_state.loss_history = loss_history
                     st.session_state.test_text = test_text
-                    st.session_state.task_type = task_type
+                    st.session_state.training_task_type = task_type  # Use different key to avoid widget conflict
                     st.session_state.task_labels = task_info.get('labels')
                     
                     st.success(f"Training complete! Trained on {len(samples)} samples for {num_epochs} epochs")
@@ -358,7 +372,8 @@ with tab6:
             # Output interpretation based on task
             st.markdown("### Output Interpretation")
             
-            current_task = st.session_state.get('task_type', 'regression')
+            # Use training_task_type if available (from last training), otherwise use current task_type from widget
+            current_task = st.session_state.get('training_task_type', task_type)
             task_labels = st.session_state.get('task_labels')
             
             if current_task == 'sentiment' and task_labels:
@@ -458,6 +473,37 @@ with tab6:
             
             **Regression**: Generic task for learning continuous outputs from inputs
             """)
+
+with tab5:
+    st.header("Memory Comparison Dashboard")
+    
+    fig, stats = compare_memory(st.session_state.model, st.session_state.lora_enabled, st.session_state.lora_rank)
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.pyplot(fig)
+    
+    with col2:
+        st.markdown("### Statistics")
+        for key, value in stats.items():
+            if isinstance(value, dict):
+                st.markdown(f"**{key}**")
+                for k, v in value.items():
+                    st.metric(k, v)
+            else:
+                st.metric(key, value)
+        
+        st.markdown("---")
+        st.markdown("### Memory Efficiency")
+        if st.session_state.lora_enabled:
+            # Count only non-LoRA parameters
+            base_params = sum(p.numel() for name, p in st.session_state.model.named_parameters() if 'lora' not in name)
+            lora_params = get_lora_parameters(st.session_state.model)
+            total_params = sum(p.numel() for p in st.session_state.model.parameters())
+            
+            efficiency = (1 - lora_params / total_params) * 100
+            st.metric("Parameter Reduction", f"{efficiency:.1f}%")
 
 # Footer
 st.markdown("---")
