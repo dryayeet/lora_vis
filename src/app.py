@@ -28,12 +28,12 @@ if 'model' not in st.session_state:
     st.session_state.dataset = ToyDataset()
     st.session_state.trained = False
 
-st.title("🧠 LoRA Fine-Tuning Simulator & Neural Memory Graph Visualizer")
+st.title("LoRA Fine-Tuning Simulator & Neural Memory Graph Visualizer")
 st.markdown("*Interactive visualization of how LoRA modifies neural networks*")
 
 # Sidebar controls
 with st.sidebar:
-    st.header("⚙️ Controls")
+    st.header("Controls")
     
     lora_enabled = st.checkbox("Enable LoRA", value=st.session_state.lora_enabled)
     
@@ -54,12 +54,12 @@ with st.sidebar:
 
 # Tabs
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "📊 Model Overview", 
-    "🔧 LoRA Injection", 
-    "💾 Memory Dashboard",
-    "➡️ Forward Pass",
-    "⬅️ Backward Pass",
-    "🎯 Knowledge Change"
+    "Model Overview", 
+    "LoRA Injection", 
+    "Memory Dashboard",
+    "Forward Pass",
+    "Backward Pass",
+    "Knowledge Change"
 ])
 
 with tab1:
@@ -110,11 +110,11 @@ with tab2:
                     st.text(f"{name}: {list(param.shape)}")
             
             st.markdown("---")
-            st.info("🔵 Blue nodes = Trainable LoRA matrices (A, B)")
-            st.info("⚪ Gray nodes = Frozen original weights (W)")
-            st.info("🟡 Gold nodes = Effective combined weight")
+            st.info("Blue nodes = Trainable LoRA matrices (A, B)")
+            st.info("Gray nodes = Frozen original weights (W)")
+            st.info("Gold nodes = Effective combined weight")
     else:
-        st.warning("⚠️ Enable LoRA in the sidebar to see LoRA injection")
+        st.warning("Enable LoRA in the sidebar to see LoRA injection")
 
 with tab3:
     st.header("Memory Comparison Dashboard")
@@ -153,7 +153,7 @@ with tab4:
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        if st.button("▶️ Run Forward Pass", key="forward"):
+        if st.button("Run Forward Pass", key="forward"):
             animator = ForwardAnimator(st.session_state.model, st.session_state.lora_enabled)
             
             # Create sample input
@@ -168,7 +168,7 @@ with tab4:
                     frame_placeholder.markdown(f"**Step {i+1}/{len(frames)}**")
                     st.components.v1.html(frame_html, height=500, scrolling=True)
                     
-                st.success("✅ Forward pass complete!")
+                st.success("Forward pass complete!")
     
     with col2:
         st.markdown("### Input")
@@ -196,7 +196,7 @@ with tab5:
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        if st.button("⬅️ Run Backward Pass", key="backward"):
+        if st.button("Run Backward Pass", key="backward"):
             animator = BackwardAnimator(st.session_state.model, st.session_state.lora_enabled)
             
             # Create sample input and run forward
@@ -213,17 +213,17 @@ with tab5:
                     frame_placeholder.markdown(f"**Step {i+1}/{len(frames)}**")
                     st.components.v1.html(frame_html, height=500, scrolling=True)
                     
-                st.success("✅ Backward pass complete!")
+                st.success("Backward pass complete!")
     
     with col2:
         st.markdown("### Gradient Info")
         
         if st.session_state.lora_enabled:
-            st.markdown("### ✅ Gradients Flow To:")
+            st.markdown("### Gradients Flow To:")
             st.markdown("- LoRA A matrices")
             st.markdown("- LoRA B matrices")
             
-            st.markdown("### ❌ Gradients DON'T Flow To:")
+            st.markdown("### Gradients DON'T Flow To:")
             st.markdown("- Original W weights (frozen)")
             
             st.info("LoRA only updates low-rank adapters A and B, keeping the original model frozen!")
@@ -247,9 +247,9 @@ with tab6:
         num_epochs = st.slider("Training Epochs", 1, 20, 5)
         learning_rate = st.slider("Learning Rate", 0.001, 0.1, 0.01, 0.001)
         
-        if st.button("🎯 Fine-tune Model"):
+        if st.button("Fine-tune Model"):
             if not st.session_state.lora_enabled:
-                st.error("⚠️ Please enable LoRA first!")
+                st.error("Please enable LoRA first!")
             else:
                 with st.spinner("Training..."):
                     # Prepare data
@@ -297,7 +297,7 @@ with tab6:
                     st.session_state.output_after = output_after
                     st.session_state.loss_history = loss_history
                     
-                    st.success(f"✅ Training complete! Trained on {len(samples)} samples for {num_epochs} epochs")
+                    st.success(f"Training complete! Trained on {len(samples)} samples for {num_epochs} epochs")
     
     with col2:
         st.markdown("### Training Results")
@@ -332,7 +332,7 @@ with tab6:
                     st.pyplot(fig)
                     break
         else:
-            st.info("👆 Train the model to see results")
+            st.info("Train the model to see results")
 
 # Footer
 st.markdown("---")

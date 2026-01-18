@@ -195,7 +195,7 @@ class BackwardAnimator:
                 if node in frozen_nodes:
                     # Frozen - show in gray with X
                     G.nodes[node]['color'] = '#A9A9A9'
-                    G.nodes[node]['label'] = G.nodes[node].get('label', node) + '\n❌'
+                    G.nodes[node]['label'] = G.nodes[node].get('label', node) + '\n(no grad)'
                 else:
                     # Active - show in green
                     G.nodes[node]['color'] = '#32CD32'  # Lime green for gradient flow
@@ -207,7 +207,7 @@ class BackwardAnimator:
         for node in frozen_nodes:
             if node in G.nodes():
                 G.nodes[node]['color'] = '#D3D3D3'
-                if '❌' not in str(G.nodes[node].get('label', '')):
+                if '(no grad)' not in str(G.nodes[node].get('label', '')):
                     G.nodes[node]['label'] = G.nodes[node].get('label', node) + '\n(frozen)'
         
         # Create PyVis network
