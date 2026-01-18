@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+import re
+from typing import List, Tuple, Optional
 
 class ToyDataset:
     """
@@ -85,26 +87,181 @@ def create_toy_text_pairs():
     return pairs
 
 
-def text_to_tensor(text, dim=8):
+def text_to_tensor(text, dim=8, method='hash'):
     """
-    Convert text to a tensor (simple hash-based encoding)
+    Convert text to a tensor using various encoding methods
     
     Args:
         text: Input text string
         dim: Dimension of output tensor
+        method: 'hash' for hash-based, 'tfidf_like' for TF-IDF-like features
     
     Returns:
         Tensor representation of text
     """
-    # Use hash for reproducible encoding
-    hash_val = hash(text)
-    np.random.seed(hash_val % (2**31))
+    if method == 'hash':
+        # Use hash for reproducible encoding
+        hash_val = hash(text)
+        np.random.seed(hash_val % (2**31))
+        
+        # Generate normalized random tensor
+        tensor = torch.tensor(np.random.randn(dim), dtype=torch.float32)
+        tensor = tensor / torch.norm(tensor)  # Normalize
+        
+        return tensor
     
-    # Generate normalized random tensor
-    tensor = torch.tensor(np.random.randn(dim), dtype=torch.float32)
-    tensor = tensor / torch.norm(tensor)  # Normalize
+    elif method == 'tfidf_like':
+        # Simple feature extraction: word counts, length, etc.
+        text_lower = text.lower()
+        words = re.findall(r'\b\w+\b', text_lower)
+        
+        features = np.zeros(dim, dtype=np.float32)
+        
+        # Feature 0: Text length (normalized)
+        features[0] = min(len(text) / 100.0, 1.0)
+        
+        # Feature 1: Word count
+        features[1] = min(len(words) / 20.0, 1.0)
+        
+        # Features 2-4: Common sentiment words (simple heuristic)
+        positive_words = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'love', 'happy', 'best']
+        negative_words = ['bad', 'terrible', 'awful', 'hate', 'worst', 'sad', 'horrible']
+        neutral_words = ['the', 'is', 'are', 'was', 'were', 'this', 'that']
+        
+        features[2] = sum(1 for w in words if w in positive_words) / max(len(words), 1)
+        features[3] = sum(1 for w in words if w in negative_words) / max(len(words), 1)
+        features[4] = sum(1 for w in words if w in neutral_words) / max(len(words), 1)
+        
+        # Features 5-7: Hash-based for remaining dimensions
+        hash_val = hash(text)
+        np.random.seed(hash_val % (2**31))
+        features[5:] = np.random.randn(dim - 5) * 0.1
+        
+        tensor = torch.tensor(features, dtype=torch.float32)
+        if torch.norm(tensor) > 0:
+            tensor = tensor / torch.norm(tensor)
+        
+        return tensor
     
-    return tensor
+    else:
+        # Default to hash
+        return text_to_tensor(text, dim, 'hash')
+
+
+class TaskDataset:
+    """
+    Dataset for real-world NLP tasks with meaningful targets
+    """
+    
+    TASK_TYPES = {
+        'sentiment': {
+            'output_dim': 2,  # [negative, positive] probabilities
+            'labels': ['Negative', 'Positive'],
+            'description': 'Classify text as positive or negative sentiment'
+        },
+        'classification': {
+            'output_dim': 4,  # 4 categories
+            'labels': ['News', 'Review', 'Question', 'Comment'],
+            'description': 'Classify text into categories'
+        },
+        'similarity': {
+            'output_dim': 8,  # Embedding vector for similarity comparison
+            'labels': None,
+            'description': 'Generate embeddings for text similarity'
+        },
+        'regression': {
+            'output_dim': 4,  # Generic regression task
+            'labels': None,
+            'description': 'Generic regression task (current default)'
+        }
+    }
+    
+    def __init__(self, task_type='sentiment', input_dim=8):
+        self.task_type = task_type
+        self.task_config = self.TASK_TYPES.get(task_type, self.TASK_TYPES['regression'])
+        self.input_dim = input_dim
+        self.output_dim = self.task_config['output_dim']
+        self.samples = []
+        self.labels = []
+        self.text_samples = []
+    
+    def infer_label_from_text(self, text: str) -> torch.Tensor:
+        """Infer label from text based on task type"""
+        text_lower = text.lower()
+        
+        if self.task_type == 'sentiment':
+            # Simple sentiment heuristic
+            positive_words = ['good', 'great', 'excellent', 'amazing', 'wonderful', 
+                            'love', 'happy', 'best', 'fantastic', 'brilliant', 
+                            'awesome', 'perfect', 'beautiful', 'nice', 'enjoy']
+            negative_words = ['bad', 'terrible', 'awful', 'hate', 'worst', 
+                            'sad', 'horrible', 'disappointed', 'poor', 'boring',
+                            'disgusting', 'ugly', 'hate', 'worst']
+            
+            pos_count = sum(1 for w in positive_words if w in text_lower)
+            neg_count = sum(1 for w in negative_words if w in text_lower)
+            
+            # Create probability distribution
+            if pos_count > neg_count:
+                label = torch.tensor([0.2, 0.8], dtype=torch.float32)  # Mostly positive
+            elif neg_count > pos_count:
+                label = torch.tensor([0.8, 0.2], dtype=torch.float32)  # Mostly negative
+            else:
+                label = torch.tensor([0.5, 0.5], dtype=torch.float32)  # Neutral
+        
+        elif self.task_type == 'classification':
+            # Classify into 4 categories based on patterns
+            text_lower = text_lower.lower()
+            if any(w in text_lower for w in ['?', 'what', 'how', 'why', 'when', 'where']):
+                label = torch.tensor([0.1, 0.1, 0.8, 0.0], dtype=torch.float32)  # Question
+            elif any(w in text_lower for w in ['review', 'rating', 'star', 'bought', 'product']):
+                label = torch.tensor([0.1, 0.8, 0.05, 0.05], dtype=torch.float32)  # Review
+            elif any(w in text_lower for w in ['news', 'report', 'announced', 'breaking']):
+                label = torch.tensor([0.8, 0.1, 0.05, 0.05], dtype=torch.float32)  # News
+            else:
+                label = torch.tensor([0.2, 0.2, 0.1, 0.5], dtype=torch.float32)  # Comment
+        
+        elif self.task_type == 'similarity':
+            # For similarity, create a deterministic embedding based on text
+            hash_val = hash(text)
+            np.random.seed(hash_val % (2**31))
+            label = torch.tensor(np.random.randn(self.output_dim), dtype=torch.float32)
+            label = label / torch.norm(label) if torch.norm(label) > 0 else label
+        
+        else:  # regression
+            hash_val = hash(text)
+            np.random.seed(hash_val % (2**31))
+            label = torch.tensor(np.random.randn(self.output_dim), dtype=torch.float32)
+        
+        return label
+    
+    def add_samples(self, text_samples: List[str], encoding_method='tfidf_like'):
+        """Add text samples with task-specific encoding"""
+        for text in text_samples:
+            # Encode text to input tensor
+            x = text_to_tensor(text, dim=self.input_dim, method=encoding_method)
+            
+            # Get task-specific label
+            y = self.infer_label_from_text(text)
+            
+            self.samples.append(x)
+            self.labels.append(y)
+            self.text_samples.append(text)
+    
+    def __len__(self):
+        return len(self.samples)
+    
+    def __getitem__(self, idx):
+        return self.samples[idx], self.labels[idx]
+    
+    def get_task_info(self):
+        """Get information about the current task"""
+        return {
+            'type': self.task_type,
+            'output_dim': self.output_dim,
+            'labels': self.task_config.get('labels'),
+            'description': self.task_config.get('description')
+        }
 
 
 class KnowledgeChangeTracker:

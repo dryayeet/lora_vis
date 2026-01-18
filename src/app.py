@@ -16,7 +16,7 @@ from visualizers.graph_builder import build_model_graph, build_lora_graph
 from visualizers.memory_tracker import MemoryTracker, compare_memory
 from visualizers.forward_animator import ForwardAnimator
 from visualizers.backward_animator import BackwardAnimator
-from utils.dataset import ToyDataset
+from utils.dataset import ToyDataset, TaskDataset
 
 st.set_page_config(page_title="LoRA Visualizer", layout="wide")
 
@@ -27,6 +27,8 @@ if 'model' not in st.session_state:
     st.session_state.lora_rank = 2
     st.session_state.dataset = ToyDataset()
     st.session_state.trained = False
+    st.session_state.task_output_dim = 4
+    st.session_state.task_type = 'regression'
 
 st.title("LoRA Fine-Tuning Simulator & Neural Memory Graph Visualizer")
 st.markdown("*Interactive visualization of how LoRA modifies neural networks*")
@@ -235,13 +237,46 @@ with tab5:
 with tab6:
     st.header("Knowledge Change Simulator")
     
+    # Task selection
+    task_type = st.selectbox(
+        "Select Task Type",
+        options=['sentiment', 'classification', 'similarity', 'regression'],
+        format_func=lambda x: {
+            'sentiment': '😊 Sentiment Analysis (Positive/Negative)',
+            'classification': '📂 Text Classification (Categories)',
+            'similarity': '🔍 Text Similarity (Embeddings)',
+            'regression': '📊 Generic Regression'
+        }.get(x, x),
+        key='task_type'
+    )
+    
+    # Get task info
+    temp_dataset = TaskDataset(task_type=task_type)
+    task_info = temp_dataset.get_task_info()
+    st.info(f"**Task:** {task_info['description']} | **Output:** {task_info['output_dim']}D vector")
+    
+    # Update model output dimension if needed
+    if 'task_output_dim' not in st.session_state or st.session_state.task_output_dim != task_info['output_dim']:
+        st.session_state.model = ToyMLP(input_dim=8, hidden_dim=16, output_dim=task_info['output_dim'])
+        if st.session_state.lora_enabled:
+            inject_lora(st.session_state.model, rank=st.session_state.lora_rank)
+        st.session_state.task_output_dim = task_info['output_dim']
+    
+    # Default examples based on task
+    default_examples = {
+        'sentiment': "I love this amazing product!\nThis is terrible and awful\nGreat service, very happy\nHate this worst experience",
+        'classification': "What is the weather today?\nI reviewed the new smartphone and it's excellent\nBreaking news: Scientists discover new planet\nThis movie was fantastic!",
+        'similarity': "The cat sat on the mat\nThe dog played in the yard\nBirds fly in the sky\nA feline rests on a rug",
+        'regression': "The cat sat on the mat\nThe dog played in the yard\nBirds fly in the sky"
+    }
+    
     col1, col2 = st.columns([3, 2])
     
     with col1:
         st.markdown("### Fine-tune on Custom Data")
         
         user_input = st.text_area("Enter training text (one sample per line):", 
-                                   "The cat sat on the mat\nThe dog played in the yard\nBirds fly in the sky",
+                                   default_examples.get(task_type, "The cat sat on the mat\nThe dog played in the yard"),
                                    height=100)
         
         num_epochs = st.slider("Training Epochs", 1, 20, 5)
@@ -252,21 +287,17 @@ with tab6:
                 st.error("Please enable LoRA first!")
             else:
                 with st.spinner("Training..."):
-                    # Prepare data
-                    samples = user_input.strip().split('\n')
-                    st.session_state.dataset.clear()  # Clear previous samples
-                    st.session_state.dataset.add_samples(samples)
+                    # Prepare data with task-specific dataset
+                    samples = [s.strip() for s in user_input.strip().split('\n') if s.strip()]
+                    task_dataset = TaskDataset(task_type=task_type)
+                    task_dataset.add_samples(samples, encoding_method='tfidf_like')
                     
-                    # Get encoded tensors from dataset for training
-                    # The last len(samples) items in dataset are the ones we just added
-                    start_idx = len(st.session_state.dataset) - len(samples)
-                    training_data = [
-                        (st.session_state.dataset.samples[i], st.session_state.dataset.labels[i])
-                        for i in range(start_idx, len(st.session_state.dataset))
-                    ]
+                    training_data = list(zip(task_dataset.samples, task_dataset.labels))
                     
                     # Get a test input for before/after comparison (first sample)
                     x_test = training_data[0][0].unsqueeze(0) if training_data else torch.randn(1, 8)
+                    test_text = samples[0] if samples else "test"
+                    
                     with torch.no_grad():
                         output_before = st.session_state.model(x_test)
                     
@@ -283,8 +314,8 @@ with tab6:
                         total_loss = 0
                         for x_encoded, y_target in training_data:
                             # Use the encoded tensors from the dataset
-                            x = x_encoded.unsqueeze(0)  # Add batch dimension (1, 8)
-                            target = y_target.unsqueeze(0)  # Add batch dimension (1, 4)
+                            x = x_encoded.unsqueeze(0)  # Add batch dimension
+                            target = y_target.unsqueeze(0)  # Add batch dimension
                             
                             optimizer.zero_grad()
                             output = st.session_state.model(x)
@@ -305,6 +336,9 @@ with tab6:
                     st.session_state.output_before = output_before
                     st.session_state.output_after = output_after
                     st.session_state.loss_history = loss_history
+                    st.session_state.test_text = test_text
+                    st.session_state.task_type = task_type
+                    st.session_state.task_labels = task_info.get('labels')
                     
                     st.success(f"Training complete! Trained on {len(samples)} samples for {num_epochs} epochs")
     
@@ -321,13 +355,85 @@ with tab6:
             ax.grid(True, alpha=0.3)
             st.pyplot(fig)
             
-            # Output comparison
-            st.markdown("### Before vs After")
+            # Output interpretation based on task
+            st.markdown("### Output Interpretation")
             
-            diff = torch.abs(st.session_state.output_after - st.session_state.output_before)
-            change_magnitude = diff.mean().item()
+            current_task = st.session_state.get('task_type', 'regression')
+            task_labels = st.session_state.get('task_labels')
             
-            st.metric("Output Change", f"{change_magnitude:.4f}")
+            if current_task == 'sentiment' and task_labels:
+                # Show sentiment probabilities
+                st.markdown(f"**Test Text:** *{st.session_state.get('test_text', 'N/A')}*")
+                
+                output_before_vals = torch.softmax(st.session_state.output_before, dim=1)[0]
+                output_after_vals = torch.softmax(st.session_state.output_after, dim=1)[0]
+                
+                col_before, col_after = st.columns(2)
+                with col_before:
+                    st.markdown("**Before Training:**")
+                    for i, label in enumerate(task_labels):
+                        st.metric(label, f"{output_before_vals[i].item():.2%}")
+                
+                with col_after:
+                    st.markdown("**After Training:**")
+                    for i, label in enumerate(task_labels):
+                        st.metric(label, f"{output_after_vals[i].item():.2%}")
+                
+                # Show prediction
+                pred_before = task_labels[torch.argmax(output_before_vals)]
+                pred_after = task_labels[torch.argmax(output_after_vals)]
+                st.markdown(f"**Prediction Before:** {pred_before} | **After:** {pred_after}")
+            
+            elif current_task == 'classification' and task_labels:
+                # Show classification probabilities
+                st.markdown(f"**Test Text:** *{st.session_state.get('test_text', 'N/A')}*")
+                
+                output_before_vals = torch.softmax(st.session_state.output_before, dim=1)[0]
+                output_after_vals = torch.softmax(st.session_state.output_after, dim=1)[0]
+                
+                # Bar chart comparison
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+                x_pos = np.arange(len(task_labels))
+                
+                ax1.bar(x_pos, output_before_vals.detach().numpy())
+                ax1.set_xticks(x_pos)
+                ax1.set_xticklabels(task_labels, rotation=45, ha='right')
+                ax1.set_ylabel("Probability")
+                ax1.set_title("Before Training")
+                ax1.set_ylim([0, 1])
+                
+                ax2.bar(x_pos, output_after_vals.detach().numpy())
+                ax2.set_xticks(x_pos)
+                ax2.set_xticklabels(task_labels, rotation=45, ha='right')
+                ax2.set_ylabel("Probability")
+                ax2.set_title("After Training")
+                ax2.set_ylim([0, 1])
+                
+                plt.tight_layout()
+                st.pyplot(fig)
+            
+            elif current_task == 'similarity':
+                # Show embedding similarity
+                st.markdown(f"**Test Text:** *{st.session_state.get('test_text', 'N/A')}*")
+                st.markdown("**Output:** Embedding vector (normalized)")
+                st.code(f"Before: {st.session_state.output_before[0][:4].numpy()}\nAfter:  {st.session_state.output_after[0][:4].numpy()}")
+                
+                # Compute cosine similarity
+                cos_sim = torch.nn.functional.cosine_similarity(
+                    st.session_state.output_before, 
+                    st.session_state.output_after, 
+                    dim=1
+                ).item()
+                st.metric("Cosine Similarity", f"{cos_sim:.4f}")
+                st.caption("Higher similarity (closer to 1.0) means embeddings changed less")
+            
+            else:
+                # Generic output comparison
+                st.markdown("### Before vs After")
+                diff = torch.abs(st.session_state.output_after - st.session_state.output_before)
+                change_magnitude = diff.mean().item()
+                st.metric("Output Change", f"{change_magnitude:.4f}")
+                st.code(f"Before: {st.session_state.output_before[0][:4].numpy()}\nAfter:  {st.session_state.output_after[0][:4].numpy()}")
             
             # Heatmap of LoRA matrices
             st.markdown("### LoRA Matrix Updates")
@@ -342,6 +448,16 @@ with tab6:
                     break
         else:
             st.info("Train the model to see results")
+            st.markdown("### Real-World Use Cases")
+            st.markdown("""
+            **Sentiment Analysis**: Classify customer reviews, social media posts, feedback as positive/negative
+            
+            **Text Classification**: Categorize documents, emails, articles into topics (news, reviews, questions)
+            
+            **Text Similarity**: Generate embeddings for search, recommendation, duplicate detection
+            
+            **Regression**: Generic task for learning continuous outputs from inputs
+            """)
 
 # Footer
 st.markdown("---")
