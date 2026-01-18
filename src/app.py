@@ -254,10 +254,19 @@ with tab6:
                 with st.spinner("Training..."):
                     # Prepare data
                     samples = user_input.strip().split('\n')
+                    st.session_state.dataset.clear()  # Clear previous samples
                     st.session_state.dataset.add_samples(samples)
                     
-                    # Get model outputs before training
-                    x_test = torch.randn(1, 8)
+                    # Get encoded tensors from dataset for training
+                    # The last len(samples) items in dataset are the ones we just added
+                    start_idx = len(st.session_state.dataset) - len(samples)
+                    training_data = [
+                        (st.session_state.dataset.samples[i], st.session_state.dataset.labels[i])
+                        for i in range(start_idx, len(st.session_state.dataset))
+                    ]
+                    
+                    # Get a test input for before/after comparison (first sample)
+                    x_test = training_data[0][0].unsqueeze(0) if training_data else torch.randn(1, 8)
                     with torch.no_grad():
                         output_before = st.session_state.model(x_test)
                     
@@ -272,10 +281,10 @@ with tab6:
                     
                     for epoch in range(num_epochs):
                         total_loss = 0
-                        for sample in samples:
-                            # Create dummy input/target from sample
-                            x = torch.randn(1, 8)
-                            target = torch.randn(1, 4)
+                        for x_encoded, y_target in training_data:
+                            # Use the encoded tensors from the dataset
+                            x = x_encoded.unsqueeze(0)  # Add batch dimension (1, 8)
+                            target = y_target.unsqueeze(0)  # Add batch dimension (1, 4)
                             
                             optimizer.zero_grad()
                             output = st.session_state.model(x)
@@ -285,10 +294,10 @@ with tab6:
                             
                             total_loss += loss.item()
                         
-                        loss_history.append(total_loss / len(samples))
+                        loss_history.append(total_loss / len(training_data))
                         progress_bar.progress((epoch + 1) / num_epochs)
                     
-                    # Get outputs after training
+                    # Get outputs after training (on same test input)
                     with torch.no_grad():
                         output_after = st.session_state.model(x_test)
                     
