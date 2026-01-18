@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class ToyMLP(nn.Module):
     """
-    A simple 2-layer MLP for demonstration purposes.
+    A simple 3-layer MLP for demonstration purposes.
     Lightweight enough to run on CPU with clear visualization.
     """
     def __init__(self, input_dim=8, hidden_dim=16, output_dim=4):
@@ -17,17 +17,21 @@ class ToyMLP(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.relu1 = nn.ReLU()
         
-        # Layer 2: hidden -> output
-        self.fc2 = nn.Linear(hidden_dim, output_dim)
+        # Layer 2: hidden -> hidden
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.relu2 = nn.ReLU()
+        
+        # Layer 3: hidden -> output
+        self.fc3 = nn.Linear(hidden_dim, output_dim)
         
         # Initialize with small random weights for stability
         self._initialize_weights()
     
     def _initialize_weights(self):
-        """Initialize weights with Xavier initialization"""
+        """Initialize weights with Kaiming initialization"""
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.xavier_uniform_(m.weight, gain=0.5)
+                nn.init.kaiming_uniform_(m.weight, a=0, mode='fan_in', nonlinearity='relu')
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
     
@@ -46,7 +50,11 @@ class ToyMLP(nn.Module):
         h1_activated = self.relu1(h1)
         
         # Layer 2
-        output = self.fc2(h1_activated)
+        h2 = self.fc2(h1_activated)
+        h2_activated = self.relu2(h2)
+        
+        # Layer 3
+        output = self.fc3(h2_activated)
         
         return output
     
@@ -71,8 +79,15 @@ class ToyMLP(nn.Module):
         intermediates['relu1_output'] = h1_activated
         
         # Layer 2
-        output = self.fc2(h1_activated)
-        intermediates['fc2_output'] = output
+        h2 = self.fc2(h1_activated)
+        intermediates['fc2_output'] = h2
+        
+        h2_activated = self.relu2(h2)
+        intermediates['relu2_output'] = h2_activated
+        
+        # Layer 3
+        output = self.fc3(h2_activated)
+        intermediates['fc3_output'] = output
         intermediates['final_output'] = output
         
         return output, intermediates

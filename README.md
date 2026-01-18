@@ -6,10 +6,10 @@ An interactive visualization tool that explains how LoRA (Low-Rank Adaptation) f
 
 1. **Model Overview** - Visualize base neural network architecture
 2. **LoRA Injection** - See how LoRA matrices A and B are added to the model
-3. **Memory Dashboard** - Compare memory usage: Full Fine-tune vs LoRA vs QLoRA
-4. **Forward Pass Animation** - Step-by-step visualization of data flowing through the network
-5. **Backward Pass Animation** - See gradient flow and understand which parameters get updated
-6. **Knowledge Change Simulator** - Fine-tune on custom data and see how predictions change
+3. **Forward Pass Animation** - Step-by-step visualization of data flowing through the network
+4. **Backward Pass Animation** - See gradient flow and understand which parameters get updated
+5. **Knowledge Change Simulator** - Fine-tune on custom data with **real-world tasks** (Sentiment Analysis, Text Classification, Text Similarity) and see how predictions change
+6. **Memory Dashboard** - Compare memory usage: Full Fine-tune vs LoRA vs QLoRA
 
 ## Quick Start
 
@@ -59,7 +59,7 @@ lora_visualizer/
 │   │   └── backward_animator.py   # Backward pass animation
 │   ├── utils/
 │   │   ├── __init__.py
-│   │   ├── dataset.py             # Toy dataset utilities
+│   │   ├── dataset.py             # Toy dataset utilities + TaskDataset for real-world tasks
 │   │   └── math_utils.py          # Mathematical helper functions
 │   └── assets/                    # Assets directory
 ├── requirements.txt               # Python dependencies
@@ -86,29 +86,34 @@ lora_visualizer/
 - Gray nodes represent frozen original weights
 - Gold nodes represent effective combined weights
 
-#### Tab 3: Memory Dashboard
-- Compare parameter counts across methods
-- View memory usage bar charts
-- See efficiency gains from LoRA
-
-#### Tab 4: Forward Pass
+#### Tab 3: Forward Pass
 - Click "Run Forward Pass" button
 - Watch data flow through the network step-by-step
 - See how LoRA modifies the computation
 
-#### Tab 5: Backward Pass
+#### Tab 4: Backward Pass
 - Click "Run Backward Pass" button
 - Watch gradients flow backward
 - Green nodes indicate nodes receiving gradients
 - See how gradients skip frozen weights in LoRA mode
 
-#### Tab 6: Knowledge Change
+#### Tab 5: Knowledge Change
+- **Select a real-world task** from the dropdown (Sentiment Analysis, Text Classification, Text Similarity, or Generic Regression)
 - Enter custom training text (one sample per line)
 - Set training epochs and learning rate
 - Click "Fine-tune Model" to train
 - View training loss curve
-- See how model outputs change
+- **See meaningful output interpretation** based on task type:
+  - Sentiment: Probability percentages for positive/negative
+  - Classification: Category probabilities with visualizations
+  - Similarity: Embedding vectors with cosine similarity scores
 - Visualize updated LoRA matrices
+- Compare model behavior before and after fine-tuning
+
+#### Tab 6: Memory Dashboard
+- Compare parameter counts across methods
+- View memory usage bar charts
+- See efficiency gains from LoRA
 
 ## Understanding LoRA
 
@@ -138,10 +143,17 @@ LoRA (Low-Rank Adaptation) is a parameter-efficient fine-tuning technique that:
 
 ### Model Architecture
 
-The default toy model is a simple 2-layer MLP:
+The default toy model is a simple 3-layer MLP:
 - Input: 8 dimensions
-- Hidden: 16 dimensions
-- Output: 4 dimensions
+- Hidden Layer 1: 16 dimensions
+- Hidden Layer 2: 16 dimensions
+- Output: Variable (2-8 dimensions depending on selected task)
+
+The output dimension automatically adjusts based on the selected task:
+- **Sentiment Analysis**: 2D output (negative/positive probabilities)
+- **Text Classification**: 4D output (category probabilities)
+- **Text Similarity**: 8D output (embedding vectors)
+- **Generic Regression**: 4D output (continuous values)
 
 This small size allows for fast CPU-only computation, clear visualization, and easy understanding.
 
@@ -159,6 +171,8 @@ class LoRALayer:
 ```
 
 The full implementation includes proper initialization (A random, B zeros), scaling factor (alpha / rank), and integration with frozen base weights.
+
+The base model uses Kaiming initialization (He initialization) for better performance with ReLU activations, which is more appropriate than Xavier initialization for deep networks with ReLU.
 
 ### Memory Calculations
 
@@ -201,10 +215,15 @@ Where 4 bytes = float32 precision
 - Compare which weights receive gradients
 
 ### Fine-tuning Experiments
-- Enter custom training data
-- Try different ranks (1, 2, 4, 8)
-- Observe how outputs change
+- **Select different tasks** to see how LoRA adapts for different objectives
+- Enter custom training data (examples provided for each task type)
+- Try different ranks (1, 2, 4, 8) to see the trade-off between parameters and performance
+- Observe how outputs change with meaningful interpretations:
+  - Sentiment: See confidence scores for positive/negative classification
+  - Classification: View category probability distributions
+  - Similarity: Compare embedding vectors before/after training
 - View updated LoRA matrices
+- See how task-specific labels are generated from text
 
 ### Memory Analysis
 - Compare parameter counts
@@ -220,7 +239,8 @@ In the sidebar:
 - **LoRA Rank**: Adjust from 1-8
 
 In the Knowledge Change tab:
-- **Training Text**: Custom data samples
+- **Task Type**: Select from Sentiment Analysis, Text Classification, Text Similarity, or Generic Regression
+- **Training Text**: Custom data samples (task-specific examples are provided)
 - **Epochs**: Number of training iterations
 - **Learning Rate**: Step size for optimization
 
@@ -302,6 +322,23 @@ If you encounter issues:
 3. Try restarting the application
 4. Check Python version (3.8+)
 
+## Real-World Tasks
+
+The Knowledge Change Simulator now supports **real-world NLP tasks** with meaningful outputs:
+
+- **😊 Sentiment Analysis**: Classify text as positive or negative sentiment (used in customer reviews, social media monitoring)
+- **📂 Text Classification**: Categorize text into News, Review, Question, or Comment (used in document organization, email routing)
+- **🔍 Text Similarity**: Generate embeddings for similarity comparison (used in search, duplicate detection, recommendations)
+- **📊 Generic Regression**: Learn continuous mappings (used for general regression tasks)
+
+Each task includes:
+- Task-specific text encoding (TF-IDF-like features)
+- Automatic label inference from text
+- Meaningful output interpretation (probabilities, embeddings, etc.)
+- Visual comparisons before/after training
+
+See [TASKS.md](TASKS.md) for detailed explanations of each task type, use cases, and output interpretation.
+
 ## Educational Goals
 
 This tool aims to help you:
@@ -309,7 +346,8 @@ This tool aims to help you:
 - Understand LoRA architecture visually
 - See gradient flow in real-time
 - Compare memory efficiency
-- Experiment with fine-tuning
+- Experiment with fine-tuning on **real-world tasks**
 - Build intuition about parameter-efficient training
+- See how neural network outputs can be interpreted for practical applications
 
 For more information about LoRA and parameter-efficient fine-tuning, explore the papers and resources mentioned above.
