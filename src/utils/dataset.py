@@ -78,7 +78,7 @@ def create_toy_text_pairs():
         List of (input_text, output_text) tuples
     """
     pairs = [
-        ("The cat sat on the mat", "A feline rests on a rug"),
+        ("The cat sat on the mat", "A feline rests on a rug slyly"),
         ("The dog played in the yard", "A canine frolics outside"),
         ("Birds fly in the sky", "Avians soar through the air"),
         ("Fish swim in the ocean", "Marine life navigates the sea"),
