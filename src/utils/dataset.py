@@ -6,7 +6,7 @@ from typing import List, Tuple, Optional
 class ToyDataset:
     """
     Simple toy dataset for demonstrating fine-tuning
-    Generates synthetic input-output pairs
+    Generates synthetic input-output pairssss
     """
     def __init__(self, input_dim=8, output_dim=4):
         self.input_dim = input_dim
