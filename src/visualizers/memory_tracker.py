@@ -96,9 +96,9 @@ class MemoryTracker:
         print(f"  Trainable: {summary['trainable_params']:,}")
         print(f"  Frozen: {summary['frozen_params']:,}")
         print()
-        print(f"Total Memory: {summary['total_memory_mb']:.4f} MB")
-        print(f"  Trainable: {summary['trainable_memory_mb']:.4f} MB")
-        print(f"  Frozen: {summary['frozen_memory_mb']:.4f} MB")
+        print(f"Total Memory: {summary['total_memory_mb']:.5f} MB")
+        print(f"  Trainable: {summary['trainable_memory_mb']:.5f} MB")
+        print(f"  Frozen: {summary['frozen_memory_mb']:.5f} MB")
         print("="*60)
 
 
