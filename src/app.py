@@ -256,10 +256,10 @@ with tab4:
         "Select Task Type",
         options=['sentiment', 'classification', 'similarity', 'regression'],
         format_func=lambda x: {
-            'sentiment': '😊 Sentiment Analysis (Positive/Negative)',
-            'classification': '📂 Text Classification (Categories)',
-            'similarity': '🔍 Text Similarity (Embeddings)',
-            'regression': '📊 Generic Regression'
+            'sentiment': 'Sentiment Analysis (Positive/Negative)',
+            'classification': 'Text Classification (Categories)',
+            'similarity': 'Text Similarity (Embeddings)',
+            'regression': 'Generic Regression'
         }.get(x, x),
         key='task_type'
     )
