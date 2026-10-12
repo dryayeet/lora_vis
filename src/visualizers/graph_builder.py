@@ -87,8 +87,9 @@ def build_model_graph(model, tracker, lora=False):
             prev_node = act_node
     
     # Add output node
+    out_dim = getattr(model, 'output_dim', 4)
     G.add_node("output",
-               label="Output\n[1, 4]",
+               label=f"Output\n[1, {out_dim}]",
                color="#FF6B6B",
                size=25,
                title="Final output")
@@ -244,8 +245,9 @@ def build_lora_graph(model, tracker):
             prev_node = act_node
     
     # Output
+    out_dim = getattr(model, 'output_dim', 4)
     G.add_node("output",
-               label="Output\n[1, 4]",
+               label=f"Output\n[1, {out_dim}]",
                color="#FF6B6B",
                size=25)
     G.add_edge(prev_node, "output", color="#666666")

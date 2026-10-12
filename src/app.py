@@ -37,20 +37,26 @@ st.markdown("*Interactive visualization of how LoRA modifies neural networks*")
 with st.sidebar:
     st.header("Controls")
     
-    lora_enabled = st.checkbox("Enable LoRA", value=st.session_state.lora_enabled)
+    lora_enabled = st.checkbox("Enable LoRA")
     
     if lora_enabled:
-        lora_rank = st.slider("LoRA Rank", min_value=1, max_value=8, value=st.session_state.lora_rank)
+        lora_rank = st.slider("LoRA Rank", min_value=1, max_value=8, value=2)
         
         if not st.session_state.lora_enabled or lora_rank != st.session_state.lora_rank:
-            st.session_state.model = ToyMLP(input_dim=8, hidden_dim=16, output_dim=4)
+            st.session_state.model = ToyMLP(
+                input_dim=8, hidden_dim=16,
+                output_dim=st.session_state.task_output_dim
+            )
             inject_lora(st.session_state.model, rank=lora_rank)
             st.session_state.lora_enabled = True
             st.session_state.lora_rank = lora_rank
             st.session_state.trained = False
     else:
         if st.session_state.lora_enabled:
-            st.session_state.model = ToyMLP(input_dim=8, hidden_dim=16, output_dim=4)
+            st.session_state.model = ToyMLP(
+                input_dim=8, hidden_dim=16,
+                output_dim=st.session_state.task_output_dim
+            )
             st.session_state.lora_enabled = False
             st.session_state.trained = False
 
@@ -72,15 +78,15 @@ with tab1:
     with col1:
         tracker = MemoryTracker()
         graph_html = build_model_graph(st.session_state.model, tracker, lora=False)
-        st.components.v1.html(graph_html, height=600, scrolling=True)
-    
-    with col2:
-        st.markdown("### Model Info")
+        st.iframe(graph_html, height=600)
+        
+        with col2:
+            st.markdown("### Model Info")
         total_params = sum(p.numel() for p in st.session_state.model.parameters())
         st.metric("Total Parameters", f"{total_params:,}")
         st.metric("Input Dimension", 8)
         st.metric("Hidden Dimension", 16)
-        st.metric("Output Dimension", 4)
+        st.metric("Output Dimension", st.session_state.model.output_dim)
         
         st.markdown("### Layer Details")
         for name, param in st.session_state.model.named_parameters():
@@ -96,7 +102,7 @@ with tab2:
         with col1:
             tracker = MemoryTracker()
             graph_html = build_lora_graph(st.session_state.model, tracker)
-            st.components.v1.html(graph_html, height=600, scrolling=True)
+            st.iframe(graph_html, height=600)
         
         with col2:
             st.markdown("### LoRA Configuration")
@@ -201,7 +207,7 @@ with tab3:
             # Display current frame
             if frame_idx < len(frames) and len(frames) > 0:
                 st.markdown(f"**{pass_label} Pass - Step {frame_idx + 1}/{len(frames)}**")
-                st.components.v1.html(frames[frame_idx], height=500, scrolling=True)
+                st.iframe(frames[frame_idx], height=500)
         else:
             st.info("Click 'Run Forward & Backward Pass' to generate the animation.")
     

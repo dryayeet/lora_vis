@@ -116,15 +116,16 @@ class LinearWithLoRA(nn.Module):
         return self.linear.weight + delta_w
 
 
-def inject_lora(model, rank=4, alpha=1.0, target_modules=None):
+def inject_lora(model, rank=4, alpha=1.0, target_modules=None, freeze_base=True):
     """
-    Inject LoRA into all Linear layers of a model
+    Inject LoRA into Linear layers of a model
     
     Args:
         model: PyTorch model
         rank: Rank of LoRA matrices
         alpha: Scaling parameter
         target_modules: List of module names to inject LoRA into (None = all Linear layers)
+        freeze_base: If True, freeze all non-LoRA parameters so only A/B train
     
     Returns:
         Modified model with LoRA injected
@@ -137,6 +138,11 @@ def inject_lora(model, rank=4, alpha=1.0, target_modules=None):
             # Replace with LoRA version
             lora_layer = LinearWithLoRA(module, rank=rank, alpha=alpha)
             setattr(model, name, lora_layer)
+    
+    if freeze_base:
+        for param_name, param in model.named_parameters():
+            if 'lora' not in param_name:
+                param.requires_grad = False
     
     return model
 

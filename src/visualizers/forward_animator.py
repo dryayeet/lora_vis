@@ -243,6 +243,13 @@ class ForwardAnimator:
                 G.add_edge(f"{name}_effective", f"{name}_output")
                 
                 prev = f"{name}_output"
+            elif isinstance(module, nn.Linear):
+                # Plain linear layer (not wrapped by LoRA)
+                G.add_node(f"{name}_weight", label=f"{name}.W", color="#D3D3D3", size=25)
+                G.add_node(f"{name}_output", label=name, color="#D3D3D3", size=20)
+                G.add_edge(prev, f"{name}_weight")
+                G.add_edge(f"{name}_weight", f"{name}_output")
+                prev = f"{name}_output"
             elif isinstance(module, nn.ReLU):
                 G.add_node(f"{name}_output", label="ReLU", color="#FFA500", size=18)
                 G.add_edge(prev, f"{name}_output")

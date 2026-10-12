@@ -101,16 +101,26 @@ class BackwardAnimator:
                 current_node = prev_layer_output
                 
             elif isinstance(module, nn.Linear):
-                # Standard linear layer - all weights get gradients
+                # Standard linear layer
                 weight_node = f"{name}_weight"
                 prev_layer_output = self._get_prev_output(name, layer_names)
                 
-                self.frames.append(self._create_frame(
-                    active_nodes=[current_node, weight_node, prev_layer_output],
-                    active_edges=[(weight_node, current_node), (prev_layer_output, weight_node)],
-                    step_desc=f"Step {step}: Gradient through {name} (all weights trainable)",
-                    show_grads=True
-                ))
+                if self.lora_enabled:
+                    # Base weights are frozen in LoRA mode (no update)
+                    self.frames.append(self._create_frame(
+                        active_nodes=[current_node, weight_node, prev_layer_output],
+                        active_edges=[(weight_node, current_node), (prev_layer_output, weight_node)],
+                        step_desc=f"Step {step}: Gradient through {name} (frozen, no update)",
+                        show_grads=True,
+                        frozen_nodes=[weight_node]
+                    ))
+                else:
+                    self.frames.append(self._create_frame(
+                        active_nodes=[current_node, weight_node, prev_layer_output],
+                        active_edges=[(weight_node, current_node), (prev_layer_output, weight_node)],
+                        step_desc=f"Step {step}: Gradient through {name} (all weights trainable)",
+                        show_grads=True
+                    ))
                 step += 1
                 
                 current_node = prev_layer_output
@@ -306,6 +316,13 @@ class BackwardAnimator:
                 G.add_edge(f"{name}_delta", f"{name}_effective")
                 G.add_edge(f"{name}_effective", f"{name}_output")
                 
+                prev = f"{name}_output"
+            elif isinstance(module, nn.Linear):
+                # Plain linear layer (not wrapped by LoRA, base weights frozen)
+                G.add_node(f"{name}_weight", label=f"{name}.W", color="#D3D3D3", size=25)
+                G.add_node(f"{name}_output", label=name, color="#D3D3D3", size=20)
+                G.add_edge(prev, f"{name}_weight")
+                G.add_edge(f"{name}_weight", f"{name}_output")
                 prev = f"{name}_output"
             elif isinstance(module, nn.ReLU):
                 G.add_node(f"{name}_output", label="ReLU", color="#FFA500", size=18)
