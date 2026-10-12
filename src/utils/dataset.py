@@ -1,7 +1,16 @@
 import torch
 import numpy as np
 import re
+import hashlib
 from typing import List, Tuple, Optional
+
+
+def stable_text_hash(text: str) -> int:
+    """
+    Deterministic hash of text, stable across sessions
+    (Python's built-in hash() is randomized per process)
+    """
+    return int.from_bytes(hashlib.md5(text.encode('utf-8')).digest()[:4], 'little')
 
 class ToyDataset:
     """
@@ -39,7 +48,7 @@ class ToyDataset:
         for text in text_samples:
             # Simple hash-based encoding
             # In a real system, you'd use proper text encoding
-            hash_val = hash(text)
+            hash_val = stable_text_hash(text)
             np.random.seed(hash_val % (2**31))
             
             x = torch.tensor(np.random.randn(self.input_dim), dtype=torch.float32)
@@ -101,7 +110,7 @@ def text_to_tensor(text, dim=8, method='hash'):
     """
     if method == 'hash':
         # Use hash for reproducible encoding
-        hash_val = hash(text)
+        hash_val = stable_text_hash(text)
         np.random.seed(hash_val % (2**31))
         
         # Generate normalized random tensor
@@ -133,7 +142,7 @@ def text_to_tensor(text, dim=8, method='hash'):
         features[4] = sum(1 for w in words if w in neutral_words) / max(len(words), 1)
         
         # Features 5-7: Hash-based for remaining dimensions
-        hash_val = hash(text)
+        hash_val = stable_text_hash(text)
         np.random.seed(hash_val % (2**31))
         features[5:] = np.random.randn(dim - 5) * 0.1
         
@@ -223,13 +232,13 @@ class TaskDataset:
         
         elif self.task_type == 'similarity':
             # For similarity, create a deterministic embedding based on text
-            hash_val = hash(text)
+            hash_val = stable_text_hash(text)
             np.random.seed(hash_val % (2**31))
             label = torch.tensor(np.random.randn(self.output_dim), dtype=torch.float32)
             label = label / torch.norm(label) if torch.norm(label) > 0 else label
         
         else:  # regression
-            hash_val = hash(text)
+            hash_val = stable_text_hash(text)
             np.random.seed(hash_val % (2**31))
             label = torch.tensor(np.random.randn(self.output_dim), dtype=torch.float32)
         
