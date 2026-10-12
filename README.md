@@ -86,18 +86,14 @@ lora_visualizer/
 - Gray nodes represent frozen original weights
 - Gold nodes represent effective combined weights
 
-#### Tab 3: Forward Pass
-- Click "Run Forward Pass" button
+#### Tab 3: Forward & Backward Pass
+- Click "Run Forward & Backward Pass" button
 - Watch data flow through the network step-by-step
-- See how LoRA modifies the computation
-
-#### Tab 4: Backward Pass
-- Click "Run Backward Pass" button
-- Watch gradients flow backward
+- Switch between the Forward Pass and Backward Pass views with the radio buttons
 - Green nodes indicate nodes receiving gradients
 - See how gradients skip frozen weights in LoRA mode
 
-#### Tab 5: Knowledge Change
+#### Tab 4: Knowledge Change
 - **Select a real-world task** from the dropdown (Sentiment Analysis, Text Classification, Text Similarity, or Generic Regression)
 - Enter custom training text (one sample per line)
 - Set training epochs and learning rate
@@ -110,7 +106,7 @@ lora_visualizer/
 - Visualize updated LoRA matrices
 - Compare model behavior before and after fine-tuning
 
-#### Tab 6: Memory Dashboard
+#### Tab 5: Memory Dashboard
 - Compare parameter counts across methods
 - View memory usage bar charts
 - See efficiency gains from LoRA
